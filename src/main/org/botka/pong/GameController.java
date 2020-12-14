@@ -11,6 +11,8 @@ package main.org.botka.pong;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 
@@ -38,25 +40,29 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
+import main.org.botka.pong.backnd.Ball;
+import main.org.botka.pong.backnd.KeyControl;
+import main.org.botka.pong.backnd.Player;
 
 /**
- * <insert class description here>
+ * Controller class that communicates between the back end model and the front end framework.
  *
  * @author Jake Botka
  *
  */
-public class GameController extends AppDriver {
+public final class GameController extends AppDriver {
+	private static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
 	public static double FRAMES_PER_SECONDS = 120;
 	public static double FRAME_PER_SECOND = 1 / FRAMES_PER_SECONDS;
 	public static volatile int FpsDisplay = 0;
 
 	public static LocalTime currentTime = LocalTime.now();
 
-	static boolean player1Up = false;
-	static boolean player1Down = false;
-	static boolean player2Up = false;
-	static boolean player2Down = false;
-	public static Pane gamePane;
+	private boolean player1Up = false;
+	private boolean player1Down = false;
+	private boolean player2Up = false;
+	private boolean player2Down = false;
+	private Pane gamePane;
 
 	private Player player1;
 	private Player player2;
@@ -95,7 +101,7 @@ public class GameController extends AppDriver {
 
 //		ballSprite.layoutXProperty().bindBidirectional(gameBall.layoutXProperty());
 //		ballSprite.layoutYProperty().bindBidirectional(gameBall.layoutYProperty());
-		updateGui();
+		updaterInit();
 	}
 
 	@FXML
@@ -111,8 +117,8 @@ public class GameController extends AppDriver {
 		primaryStage.setScene(appScene);
 		primaryStage.show();
 
-		player1 = new Player();
-		player2 = new Player();
+		player1 = new Player(KeyCode.W, KeyCode.S);
+		player2 = new Player(KeyCode.P, KeyCode.L);
 		gameBall = new Ball(gamePane);
 
 		gameBall.setVisible(false);
@@ -127,9 +133,9 @@ public class GameController extends AppDriver {
 		gamePane.getChildren().add(player2.getPlayerPaddle().getPaddle());
 		gamePane.getChildren().add(gameBall);
 
-		System.out.println(gamePane.getChildren());
+		
 		canvas.toFront();
-		System.out.println(canvas.getLayoutBounds());
+		
 
 		player1Paddle.setLayoutX((gamePane.getLayoutBounds().getMinX() + 100));
 		player1Paddle.setLayoutY(gamePane.getLayoutBounds().getMaxY() / 2 - 50);
@@ -175,24 +181,33 @@ public class GameController extends AppDriver {
 
 		appScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
-				if (event.getCode() == KeyCode.W) {
+				KeyControl<KeyCode> playerOnePaddleUpControl = (KeyControl<KeyCode>)player1.getPaddleUpControl();
+				KeyControl<KeyCode> playerOnePaddleDownControl = (KeyControl<KeyCode>)player1.getPaddleDownControl();
+				KeyControl<KeyCode> playerTwoPaddleUpControl = (KeyControl<KeyCode>)player2.getPaddleUpControl();
+				KeyControl<KeyCode> playerTwoPaddleDownControl = (KeyControl<KeyCode>)player2.getPaddleDownControl();
+				System.out.println(event.getCharacter());
+				if (event.getCode().equals(playerOnePaddleUpControl.getControl())) {
 					if (player1Up != true) {
+						playerOnePaddleUpControl.sendControlActivatedEvent(playerOnePaddleUpControl.getControl(), System.currentTimeMillis());
 						player1Up = true;
 					}
 
-				} else if (event.getCode() == KeyCode.S) {
+				} else if (event.getCode().equals(playerOnePaddleDownControl.getControl())) {
 					if (player1Down != true) {
+						playerOnePaddleDownControl.sendControlActivatedEvent(playerOnePaddleDownControl.getControl(), System.currentTimeMillis());
 						player1Down = true;
 					}
 
 				}
-				if (event.getCode() == KeyCode.P) {
+				if (event.getCode().equals(playerTwoPaddleUpControl.getControl())) {
 					if (player2Up != true) {
+						playerTwoPaddleUpControl.sendControlActivatedEvent(playerTwoPaddleUpControl.getControl(), System.currentTimeMillis());
 						player2Up = true;
 					}
 
-				} else if (event.getCode() == KeyCode.L) {
+				} else if (event.getCode().equals(playerTwoPaddleDownControl.getControl())) {
 					if (player2Down != true) {
+						playerTwoPaddleDownControl.sendControlActivatedEvent(playerTwoPaddleDownControl.getControl(), System.currentTimeMillis());
 						player2Down = true;
 					}
 
@@ -224,15 +239,17 @@ public class GameController extends AppDriver {
 
 	}
 
-	public void updateGui() {
-
+	/**
+	 * Initializes the updater.
+	 */
+	public void updaterInit() {
 		final Timeline timeline = new Timeline(
 				new KeyFrame(Duration.seconds(FRAME_PER_SECOND), new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent e) {
 
 						if (gameBall.isCanMove() == true) {
-							System.out.println(gameBall.getCenterX());
+							
 							gameBall.constantMove(gameBall.getCenterX(), gameBall.getCenterY(), gc);
 							gc.clearRect(0, 0, 2000, 2000);
 
@@ -243,95 +260,7 @@ public class GameController extends AppDriver {
 									gameBall.getRadius() * 2);
 						}
 
-						if (player1Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-
-							double a1 = (player1Paddle.getHeight() * 1 / 3);
-							double a2 = (player1Paddle.getHeight() * 2 / 3);
-							double a3 = (player1Paddle.getHeight() * 3 / 3);
-							double y = player1Paddle.getLayoutY();
-							double z = gameBall.getCenterY();
-							a1 = y + a1;
-							a2 = y + a2;
-							a3 = y + a3;
-
-							if (z >= y && z <= a1 && z <= a3) {
-								gameBall.hitPaddle(0.5, -0.5);
-								System.out.println("HUp");
-							} else if (z > a1 && z <= a2 && z <= a3) {
-								gameBall.hitPaddle(1.0, 0.1);
-								System.out.println("HCenter");
-							} else if (z > a2 && z <= a3) {
-								gameBall.hitPaddle(0.5, 0.5);
-								System.out.println("Hdown");
-
-							} else {
-								System.out.println("did not hit front paddle");
-
-							}
-
-							System.out.println(z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
-							gameBall.setCenterX(gameBall.getXLocation());
-							gameBall.setCenterY(gameBall.getYLocation());
-						} else if (player2Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-							double a1 = (player2Paddle.getHeight() * 1 / 3);
-							double a2 = (player2Paddle.getHeight() * 2 / 3);
-							double a3 = (player2Paddle.getHeight() * 3 / 3);
-							double y = player2Paddle.getLayoutY();
-							double z = gameBall.getCenterY();
-							a1 = y + a1;
-							a2 = y + a2;
-							a3 = y + a3;
-
-							if (z >= y && z <= a1 && z <= a3) {
-								gameBall.hitPaddle(-0.5, -0.5);
-								System.out.println("HUp");
-							} else if (z > a1 && z <= a2 && z <= a3) {
-								gameBall.hitPaddle(-0.5, 0.1);
-								System.out.println("HCenter");
-							} else if (z > a2 && z <= a3) {
-								gameBall.hitPaddle(-0.5, 0.5);
-								System.out.println("Hdown");
-
-							} else {
-								System.out.println("did not hit front paddle");
-
-							}
-
-							System.out.println("Paddle 2" + z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
-
-							gameBall.setCenterX(gameBall.getXLocation());
-							gameBall.setCenterY(gameBall.getYLocation());
-						}
-						if (player1GoalLine.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-
-							player1.playerScoredGoal();
-							gameBall.reset();
-							gameBall.setCenterX(gameBall.getXLocation());
-							gameBall.setCenterY(gameBall.getYLocation());
-							;
-							System.out.println("Scored");
-							gc.clearRect(0, 0, 2000, 2000);
-							gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-									gameBall.getRadius() * 2);
-							int score = Integer.parseInt(score1.getText());
-							score += 1;
-							score1.setText(Integer.toString(score));
-						} else if (gameBall.getBoundsInParent().intersects(player2GoalLine.getBoundsInParent())) {
-
-							player2.playerScoredGoal();
-							gameBall.reset();
-							gameBall.setCenterX(gameBall.getXLocation());
-
-							gameBall.setCenterY(gameBall.getYLocation());
-							gc.clearRect(0, 0, 2000, 2000);
-							gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-									gameBall.getRadius() * 2);
-
-							System.out.println("Scored");
-							int score = Integer.parseInt(score2.getText());
-							score += 1;
-							score2.setText(Integer.toString(score));
-						}
+						checkCollisions();
 
 						if (gameBall.getCenterX() < gamePane.getLayoutBounds().getMinX()
 								|| gameBall.getCenterX() > gamePane.getLayoutBounds().getMinX()) {
@@ -379,23 +308,113 @@ public class GameController extends AppDriver {
 					}
 				}));
 		timeline.setCycleCount(Animation.INDEFINITE);
-
 		timeline.play();
-
+		this.initFPSDisplay();
+	}
+	
+	public void initFPSDisplay() {
 		Timeline oneSec = new Timeline(new KeyFrame(Duration.seconds(1), new EventHandler<ActionEvent>() {
 
 			@SuppressWarnings("deprecation")
 			@Override
 			public void handle(ActionEvent event) {
-				System.out.println(FpsDisplay);
-				score1.setText(Integer.toString(FpsDisplay));
+				//System.out.println(FpsDisplay);
+				//score1.setText(Integer.toString(FpsDisplay));
 				FpsDisplay = 0;
 
 			}
 		}));
 		oneSec.setCycleCount(Animation.INDEFINITE);
 		oneSec.play();
+	}
+	
+	public final void checkCollisions() {
+		double a1 = 0.0;
+		double a2 = 0.0;
+		double a3 = 0.0;
+		double y = 0.0;
+		double z = 0.0;
+		if (player1Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
+			a1 = (player1Paddle.getHeight() * 1 / 3);
+			a2 = (player1Paddle.getHeight() * 2 / 3);
+			a3 = (player1Paddle.getHeight() * 3 / 3);
+			y = player1Paddle.getLayoutY();
+			z = gameBall.getCenterY();
+			a1 = y + a1;
+			a2 = y + a2;
+			a3 = y + a3;
+			if (z >= y && z <= a1 && z <= a3) {
+				gameBall.hitPaddle(0.5, -0.5);
+				//System.out.println("HUp");
+			} else if (z > a1 && z <= a2 && z <= a3) {
+				gameBall.hitPaddle(1.0, 0.1);
+				//System.out.println("HCenter");
+			} else if (z > a2 && z <= a3) {
+				gameBall.hitPaddle(0.5, 0.5);
+				//System.out.println("Hdown");
 
+			} else {
+				System.out.println("did not hit front paddle");
+
+			}
+
+			//System.out.println(z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
+			gameBall.setCenterX(gameBall.getXLocation());
+			gameBall.setCenterY(gameBall.getYLocation());
+		} else if (player2Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
+			a1 = (player2Paddle.getHeight() * 1 / 3);
+			a2 = (player2Paddle.getHeight() * 2 / 3);
+			a3 = (player2Paddle.getHeight() * 3 / 3);
+			y = player2Paddle.getLayoutY();
+			z = gameBall.getCenterY();
+			a1 = y + a1;
+			a2 = y + a2;
+			a3 = y + a3;
+
+			if (z >= y && z <= a1 && z <= a3) {
+				gameBall.hitPaddle(-0.5, -0.5);
+				System.out.println("HUp");
+			} else if (z > a1 && z <= a2 && z <= a3) {
+				gameBall.hitPaddle(-0.5, 0.1);
+				System.out.println("HCenter");
+			} else if (z > a2 && z <= a3) {
+				gameBall.hitPaddle(-0.5, 0.5);
+				System.out.println("Hdown");
+
+			} else {
+				System.out.println("did not hit front paddle");
+
+			}
+			//System.out.println("Paddle 2" + z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
+			gameBall.setCenterX(gameBall.getXLocation());
+			gameBall.setCenterY(gameBall.getYLocation());
+		}
+		if (player1GoalLine.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
+			player1.playerScoredGoal();
+			gameBall.reset();
+			gameBall.setCenterX(gameBall.getXLocation());
+			gameBall.setCenterY(gameBall.getYLocation());
+			System.out.println("Scored");
+			gc.clearRect(0, 0, 2000, 2000);
+			gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
+					gameBall.getRadius() * 2);
+			int score = Integer.parseInt(score1.getText());
+			score += 1;
+			score1.setText(Integer.toString(score));
+		} else if (gameBall.getBoundsInParent().intersects(player2GoalLine.getBoundsInParent())) {
+			player2.playerScoredGoal();
+			gameBall.reset();
+			gameBall.setCenterX(gameBall.getXLocation());
+			gameBall.setCenterY(gameBall.getYLocation());
+			gc.clearRect(0, 0, 2000, 2000);
+			gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
+					gameBall.getRadius() * 2);
+
+			System.out.println("Scored");
+			int score = Integer.parseInt(score2.getText());
+			score += 1;
+			score2.setText(Integer.toString(score));
+		}
 	}
 
 }
