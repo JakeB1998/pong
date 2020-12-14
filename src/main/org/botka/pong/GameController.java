@@ -119,11 +119,10 @@ public final class GameController extends AppDriver {
 
 		player1 = new Player(KeyCode.W, KeyCode.S);
 		player2 = new Player(KeyCode.P, KeyCode.L);
+		
 		gameBall = new Ball(gamePane);
-
 		gameBall.setVisible(false);
 		gameBall.setDisable(true);
-
 		gameBall.applyCss();
 
 		player1Paddle = player1.getPlayerPaddle().getPaddle();
@@ -132,10 +131,8 @@ public final class GameController extends AppDriver {
 		gamePane.getChildren().add(player1.getPlayerPaddle().getPaddle());
 		gamePane.getChildren().add(player2.getPlayerPaddle().getPaddle());
 		gamePane.getChildren().add(gameBall);
-
-		
+		//Ensures that canvas is visible
 		canvas.toFront();
-		
 
 		player1Paddle.setLayoutX((gamePane.getLayoutBounds().getMinX() + 100));
 		player1Paddle.setLayoutY(gamePane.getLayoutBounds().getMaxY() / 2 - 50);
@@ -143,7 +140,7 @@ public final class GameController extends AppDriver {
 		player2Paddle.setLayoutY(gamePane.getLayoutBounds().getMaxY() / 2 - 50);
 		player1.getPlayerPaddle().setCord(new Point2D(player1Paddle.getLayoutX(), player1Paddle.getLayoutY()));
 		player2.getPlayerPaddle().setCord(new Point2D(player2Paddle.getLayoutX(), player2Paddle.getLayoutY()));
-
+		//Adds boundry lines for the screen edges to check for collisions.
 		screenLine1 = new Line();
 		screenLine1.setStartX(0);
 		screenLine1.setEndX(gamePane.getLayoutBounds().getMaxX());
@@ -154,7 +151,9 @@ public final class GameController extends AppDriver {
 		screenLine2.setEndX(gamePane.getLayoutBounds().getMaxX());
 		screenLine2.setLayoutX(0);
 		screenLine2.setLayoutY(gamePane.getLayoutBounds().getMinY());
+		
 		gamePane.getChildren().add(screenLine2);
+		
 		player1GoalLine = new Line();
 		player1GoalLine.setLayoutX(0);
 		player1GoalLine.setLayoutY(0);
@@ -210,33 +209,23 @@ public final class GameController extends AppDriver {
 						playerTwoPaddleDownControl.sendControlActivatedEvent(playerTwoPaddleDownControl.getControl(), System.currentTimeMillis());
 						player2Down = true;
 					}
-
 				}
-
 			}
-
 		});
 		appScene.setOnKeyReleased(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
 				if (event.getCode() == KeyCode.W) {
 					player1Up = false;
-
 				} else if (event.getCode() == KeyCode.S) {
 					player1Down = false;
-
 				}
 				if (event.getCode() == KeyCode.P) {
-
 					player2Up = false;
-
 				} else if (event.getCode() == KeyCode.L) {
 					player2Down = false;
 				}
-
 			}
-
 		});
-
 	}
 
 	/**
@@ -247,21 +236,15 @@ public final class GameController extends AppDriver {
 				new KeyFrame(Duration.seconds(FRAME_PER_SECOND), new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent e) {
-
 						if (gameBall.isCanMove() == true) {
-							
 							gameBall.constantMove(gameBall.getCenterX(), gameBall.getCenterY(), gc);
 							gc.clearRect(0, 0, 2000, 2000);
-
 							gameBall.setCenterX(gameBall.getXLocation());
 							gameBall.setCenterY(gameBall.getYLocation());
-
 							gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
 									gameBall.getRadius() * 2);
 						}
-
 						checkCollisions();
-
 						if (gameBall.getCenterX() < gamePane.getLayoutBounds().getMinX()
 								|| gameBall.getCenterX() > gamePane.getLayoutBounds().getMinX()) {
 							// gc.clearRect(0, 0, 2000, 2000);
@@ -277,13 +260,11 @@ public final class GameController extends AppDriver {
 							player1.getPlayerPaddle().moveUp();
 						} else {
 							player1Up = false;
-
 						}
 						if (player1Down == true && player1.getPlayerPaddle().canMoveDown() == true) {
 							player1.getPlayerPaddle().moveDown();
 						} else {
 							player1Down = false;
-
 						}
 						if (player2Up == true && player2.getPlayerPaddle().canMoveUp() == true) {
 							player2.getPlayerPaddle().moveUp();
@@ -301,10 +282,7 @@ public final class GameController extends AppDriver {
 						player1Paddle.setLayoutY(player1.getPlayerPaddle().getYCord());
 						player2Paddle.setLayoutX(player2.getPlayerPaddle().getXCord());
 						player2Paddle.setLayoutY(player2.getPlayerPaddle().getYCord());
-
 						FpsDisplay += 1;
-//			           gay = (double)LocalTime.now().get(ChronoField.MILLI_OF_SECOND) / 999 - gay;
-//			           System.out.println(gay);
 					}
 				}));
 		timeline.setCycleCount(Animation.INDEFINITE);
@@ -312,9 +290,11 @@ public final class GameController extends AppDriver {
 		this.initFPSDisplay();
 	}
 	
+	/**
+	 * Initializes the FPS display.
+	 */
 	public void initFPSDisplay() {
 		Timeline oneSec = new Timeline(new KeyFrame(Duration.seconds(1), new EventHandler<ActionEvent>() {
-
 			@SuppressWarnings("deprecation")
 			@Override
 			public void handle(ActionEvent event) {
@@ -328,6 +308,9 @@ public final class GameController extends AppDriver {
 		oneSec.play();
 	}
 	
+	/**
+	 * Checks for collisions.
+	 */
 	public final void checkCollisions() {
 		double a1 = 0.0;
 		double a2 = 0.0;
@@ -357,8 +340,6 @@ public final class GameController extends AppDriver {
 				System.out.println("did not hit front paddle");
 
 			}
-
-			//System.out.println(z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
 			gameBall.setCenterX(gameBall.getXLocation());
 			gameBall.setCenterY(gameBall.getYLocation());
 		} else if (player2Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
@@ -385,36 +366,46 @@ public final class GameController extends AppDriver {
 				System.out.println("did not hit front paddle");
 
 			}
-			//System.out.println("Paddle 2" + z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
 			gameBall.setCenterX(gameBall.getXLocation());
 			gameBall.setCenterY(gameBall.getYLocation());
 		}
+		//System.out.println("Paddle 2" + z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
 		if (player1GoalLine.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
 			player1.playerScoredGoal();
-			gameBall.reset();
-			gameBall.setCenterX(gameBall.getXLocation());
-			gameBall.setCenterY(gameBall.getYLocation());
-			System.out.println("Scored");
-			gc.clearRect(0, 0, 2000, 2000);
-			gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-					gameBall.getRadius() * 2);
+			this.clearScreen();
+			this.resetGameBall();
 			int score = Integer.parseInt(score1.getText());
 			score += 1;
 			score1.setText(Integer.toString(score));
 		} else if (gameBall.getBoundsInParent().intersects(player2GoalLine.getBoundsInParent())) {
 			player2.playerScoredGoal();
-			gameBall.reset();
-			gameBall.setCenterX(gameBall.getXLocation());
-			gameBall.setCenterY(gameBall.getYLocation());
-			gc.clearRect(0, 0, 2000, 2000);
-			gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-					gameBall.getRadius() * 2);
-
+			this.clearScreen();
+			this.resetGameBall();
 			System.out.println("Scored");
 			int score = Integer.parseInt(score2.getText());
 			score += 1;
 			score2.setText(Integer.toString(score));
 		}
 	}
+	
+	/**
+	 * Writes a blank screen.
+	 */
+	public void clearScreen() {
+		gc.clearRect(0, 0, 2000, 2000);
+	}
+	
+	/**
+	 * Resets the game ball to the middle of the screen.
+	 */
+	public void resetGameBall() {
+		gameBall.reset();
+		gameBall.setCenterX(gameBall.getXLocation());
+		gameBall.setCenterY(gameBall.getYLocation());
+		gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
+				gameBall.getRadius() * 2);
+	}
+	
+	
 
 }
