@@ -39,6 +39,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import main.org.botka.pong.backnd.Ball;
 import main.org.botka.pong.backnd.KeyControl;
@@ -50,7 +51,7 @@ import main.org.botka.pong.backnd.Player;
  * @author Jake Botka
  *
  */
-public final class GameController extends AppDriver {
+public final class GameController  {
 	private static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
 	public static double FRAMES_PER_SECONDS = 120;
 	public static double FRAME_PER_SECOND = 1 / FRAMES_PER_SECONDS;
@@ -58,6 +59,8 @@ public final class GameController extends AppDriver {
 
 	public static LocalTime currentTime = LocalTime.now();
 
+	private Stage mStage;
+	private Scene mScene;
 	private boolean player1Up = false;
 	private boolean player1Down = false;
 	private boolean player2Up = false;
@@ -82,10 +85,15 @@ public final class GameController extends AppDriver {
 	public static Label score1 = new Label("0");
 	public static Label score2 = new Label("0");
 
+	
 	private GraphicsContext gc;
 	private Canvas canvas;
 
-	public GameController() {
+	/**
+	 * 
+	 */
+	public GameController(Stage stage) {
+		this.mStage = stage;
 		File file = new File("/Pong/src/edu/ilstu/ballSprite.png");
 		String url = file.getPath();
 		System.out.println(url);
@@ -113,9 +121,9 @@ public final class GameController extends AppDriver {
 		gc = canvas.getGraphicsContext2D();
 
 		gamePane.getChildren().add(canvas);
-		appScene = new Scene(gamePane);
-		primaryStage.setScene(appScene);
-		primaryStage.show();
+		mScene = new Scene(gamePane);
+		mStage.setScene(mScene);
+		mStage.show();
 
 		player1 = new Player(KeyCode.W, KeyCode.S);
 		player2 = new Player(KeyCode.P, KeyCode.L);
@@ -178,7 +186,7 @@ public final class GameController extends AppDriver {
 
 		;
 
-		appScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+		mScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
 				KeyControl<KeyCode> playerOnePaddleUpControl = (KeyControl<KeyCode>)player1.getPaddleUpControl();
 				KeyControl<KeyCode> playerOnePaddleDownControl = (KeyControl<KeyCode>)player1.getPaddleDownControl();
@@ -212,7 +220,7 @@ public final class GameController extends AppDriver {
 				}
 			}
 		});
-		appScene.setOnKeyReleased(new EventHandler<KeyEvent>() {
+		mScene.setOnKeyReleased(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
 				if (event.getCode() == KeyCode.W) {
 					player1Up = false;

@@ -23,8 +23,7 @@ import javafx.stage.Stage;
  *
  */
 public class AppDriver extends Application {
-	static Stage primaryStage;
-	static Scene appScene;
+	
 
 	/**
 	 * @param args
@@ -36,9 +35,8 @@ public class AppDriver extends Application {
 
 	@Override
 	public void start(Stage arg0) throws Exception {
-		primaryStage = arg0;
-
-		GameController game = new GameController();
+	
+		GameController game = new GameController(arg0);
 
 //		appScene.getStylesheets().add
 //		 (Login.class.getResource("Login.css").toExternalForm());
