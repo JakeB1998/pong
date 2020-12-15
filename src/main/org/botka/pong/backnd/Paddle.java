@@ -12,6 +12,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import main.org.botka.pong.GameController;
+import main.org.botka.pong.backnd.controls.KeyControl;
 
 /**
  * <insert class description here>
@@ -38,47 +39,24 @@ public class Paddle {
 		this.mMoveUp = true;
 		this.mMoveDown = true;
 		this.mSpeed = DEFAULT_MOVEMENT_SPEED;
-
 	}
 
 	public void moveUp() {
-		if ((!(GameController.screenLine2.getBoundsInParent().intersects(mPaddle.getBoundsInParent())))) {
-			mMoveDown = true;
-			mMoveUp = true;
-			for (int i = 0; i < mSpeed; i++) {
-				Thread.currentThread();
-				// Thread.sleep((long) GameController.FRAME_PER_SECOND);
-				mPaddle.setLayoutY(mYCord - 1);
-				mYCord = mPaddle.getLayoutY();
-
-			}
-		} else {
-			mMoveUp = false;
-			System.out.println("Reached border");
-
+		for (int i = 0; i < mSpeed; i++) {
+			mYCord -= 1;
+			mPaddle.setLayoutY(mYCord);
 		}
-
 	}
 
 	public void moveDown() {
-		if (!(GameController.screenLine1.getBoundsInParent().intersects(mPaddle.getBoundsInParent()))) {
-			mMoveUp = true;
-			mMoveDown = true;
-			for (int i = 0; i < mSpeed; i++) {
-				mPaddle.setLayoutY(mYCord + 1);
-				mYCord = mPaddle.getLayoutY();
-
-			}
-		} else {
-			mMoveDown = false;
-			System.out.println("Reached border");
+		for (int i = 0; i < mSpeed; i++) {
+			mYCord += 1;
+			mPaddle.setLayoutY(mYCord);
 		}
-
 	}
 
 	public boolean canMoveUp() {
 		return mMoveUp;
-
 	}
 
 	public boolean canMoveDown() {
@@ -90,6 +68,8 @@ public class Paddle {
 		this.mUpControl = upControl;
 		this.mDownControl = downControl;
 	}
+	
+	
 	/**
 	 * @return the paddle
 	 */
@@ -177,6 +157,14 @@ public class Paddle {
 	
 	public void setDownControl(KeyControl<?> control) {
 		this.mDownControl = control;
+	}
+	
+	public void setCanMoveUp(boolean value) {
+		this.mMoveUp = value;
+	}
+	
+	public void setCanMoveDown(boolean value) {
+		this.mMoveDown = value;
 	}
 
 }

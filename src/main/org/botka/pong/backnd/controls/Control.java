@@ -4,7 +4,7 @@
  * Date Created: Dec 14, 2020
  *
  */
-package main.org.botka.pong.backnd;
+package main.org.botka.pong.backnd.controls;
 
 import javafx.scene.input.KeyCode;
 
@@ -31,6 +31,7 @@ public abstract class Control<T> {
 	
 	
 	private T mControl;
+	private boolean mLogging;
 	
 	private Control() {
 		this.mControl = null;
@@ -42,17 +43,23 @@ public abstract class Control<T> {
 	}
 	
 	private final void logControl(T control, long timeStamp) {
-		if (control != null) {
-			System.out.println("[" + TAG + "]" + timeStamp + ": " + control.toString());
-		} else {
-			System.err.println("Control wass null at time: " + timeStamp);
-		}	
+		if (this.isLogging()) {
+			if (control != null) {
+				System.out.println("[" + TAG + "]" + timeStamp + ": " + control.toString());
+			} else {
+				System.err.println("Control wass null at time: " + timeStamp);
+			}	
+		}
 	}
 	
 	public abstract String controlDescription();
 	public abstract String controlBindingText();
 	public abstract boolean isActive();
 	public abstract boolean isDisabled();
+	
+	public boolean isLogging() {
+		return this.getLogging();
+	}
 	
 	public ControlActivatedListener<T> getSuperActivatedListener(){
 		return ACTIVATED_LISTENER;
@@ -67,6 +74,14 @@ public abstract class Control<T> {
 	
 	public void setControl(T control) {
 		this.mControl = control;
+	}
+	
+	public boolean getLogging() {
+		return this.mLogging;
+	}
+	
+	public void setLogging(boolean value) {
+		this.mLogging = value;
 	}
 	
 }

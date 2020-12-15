@@ -7,12 +7,12 @@ This pong game made in pure Java using the JavaFX front end framework. This is a
 Controls are lower case.
 
 ### Player 1
-Move paddle up: W
-Move paddle down: S
+- Move paddle up: W
+- Move paddle down: S
 
 ### Player 2
-Move paddle up: P
-Move paddle down: L
+- Move paddle up: P
+- Move paddle down: L
 
 Source code is set up with api level systems like key binding that I will eventually extract to either a game libriry or the Aveono Utility library in a game subpackage. This makes it easy to alter if you would like to change the controls or many other systems.
 

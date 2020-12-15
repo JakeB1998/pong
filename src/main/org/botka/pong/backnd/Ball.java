@@ -43,6 +43,7 @@ public class Ball extends Circle {
 	private boolean mCanMove, mCanBounce;
 
 	private Point2D cord;
+	private String mLastCollisionID;
 	
 	
 	private Ball() {
@@ -53,6 +54,7 @@ public class Ball extends Circle {
 		this.mCanMove = true;
 		this.mCanBounce = true;
 		this.cord = null;
+		this.mLastCollisionID = null;
 	
 	}
 
@@ -64,11 +66,26 @@ public class Ball extends Circle {
 		cord = new Point2D(this.getCenterX(), this.getCenterY());
 
 	}
+	
+	public void bounce(Object collidingObject) {
+		//MediaSystem.playPongBlip();
+		mBounceCount++;
+		if (mCanBounce == true && String.valueOf(collidingObject.hashCode()).equals(this.mLastCollisionID) == false ) {
+			mYVec = mYVec * -1;
+		}
+		
+	}
+
+	public void changeBallVector(double xVec, double yVec) {
+		this.mXVec = xVec;
+		this.mYVec = yVec;
+	}
 
 	public void constantMove(double centerX, double centerY, GraphicsContext gc) {
-		if (mCanMove = true) {
+		if (mCanMove) {
 			mXLocation = centerX + (mXVec * mVelocity);
 			mYLocation = centerY + (mYVec * mVelocity);
+			/*
 			if (((GameController.screenLine2.getBoundsInParent().intersects(this.getBoundsInParent())))) {
 				bounce();
 				// yLocation += offset;
@@ -78,6 +95,7 @@ public class Ball extends Circle {
 				// yLocation -= offset;
 
 			}
+			*/
 			if (mYVec > 0.60) {
 				mYVec = mYVec / 2;
 				mXVec = mXVec * 2;
@@ -86,8 +104,9 @@ public class Ball extends Circle {
 		}
 	}
 
-	public void hitPaddle(double x, double y) {
-		MediaSystem.playPongBlip();
+	public void hitPaddle(double x, double y, Paddle paddle) {
+		//MediaSystem.playPongBlip();
+		this.bounce(paddle);
 		mYVec = y;
 		if (mXVec > 0) {
 			mXVec = x;
@@ -110,36 +129,15 @@ public class Ball extends Circle {
 		mOffset += 10;
 	}
 
-	public void bounce() {
-		MediaSystem.playPongBlip();
-		mBounceCount++;
-		if (mCanBounce == true) {
-			mYVec = mYVec * -1;
-			mCanBounce = false;
-		}
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(100);
-					mCanBounce = true;
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
-		t.start();
-	}
-
-	public void changeBallVector(double xVec, double yVec) {
-		this.mXVec = xVec;
-		this.mYVec = yVec;
-	}
+	
 
 	public void stopConstantMove() {
 		mCanMove = false;
 
+	}
+	
+	public void registerCollision(Object collisionSource) {
+		this.mLastCollisionID = String.valueOf(collisionSource.hashCode());
 	}
 
 	public void reset() {
@@ -381,6 +379,10 @@ public class Ball extends Circle {
 	 */
 	public void setOffset(double offset) {
 		this.mOffset = offset;
+	}
+	
+	public String getLastCollisionID() {
+		return this.mLastCollisionID;
 	}
 
 	private void update() {

@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
+import java.util.Random;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -22,6 +23,7 @@ import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -42,8 +44,10 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import main.org.botka.pong.backnd.Ball;
-import main.org.botka.pong.backnd.KeyControl;
+import main.org.botka.pong.backnd.Paddle;
 import main.org.botka.pong.backnd.Player;
+import main.org.botka.pong.backnd.Player.Side;
+import main.org.botka.pong.backnd.controls.KeyControl;
 
 /**
  * Controller class that communicates between the back end model and the front end framework.
@@ -61,36 +65,42 @@ public final class GameController  {
 
 	private Stage mStage;
 	private Scene mScene;
-	private boolean player1Up = false;
-	private boolean player1Down = false;
-	private boolean player2Up = false;
-	private boolean player2Down = false;
-	private Pane gamePane;
+	private boolean mPlayerOneUp = false;
+	private boolean mPlayerOneDown = false;
+	private boolean mPlayerTwoUp = false;
+	private boolean mPlayerTwoDown = false;
+	private Pane mGamePane;
 
-	private Player player1;
-	private Player player2;
-	private Ball gameBall;
+	private Player mPlayerOne;
+	private Player mPlayerTwo;
+	private Ball mGameBall;
 
-	private Rectangle player1Paddle;
-	private Rectangle player2Paddle;
+	private Rectangle mPlayerOnePaddle;
+	private Rectangle mPlayerTwoPaddle;
 
-	private ImageView ballSprite;
-	private ImageView PaddleSprite;
+	private ImageView mBallSprite;
+	
 
-	public static Line player1GoalLine;
-	public static Line player2GoalLine;
-	public static Line screenLine1;
-	public static Line screenLine2;
+	private Line mPlayerOneGoalLine;
+	private Line mPlayerTwoGoalLine;
+	private Line mScreenLineOne;
+	private Line mScreenLineTwo;
+	
+	private Bounds mPlayerOneGoalLineBounds;
+	public Bounds mPlayerTwoGoalLineBounds;
+	public Bounds mScreenLineOneBounds;
+	public Bounds mScreenLineTwoBounds;
 
-	public static Label score1 = new Label("0");
-	public static Label score2 = new Label("0");
+	public Label mScoreLabelOne = new Label("0");
+	public Label mScoreLabelTwo = new Label("0");
 
 	
-	private GraphicsContext gc;
-	private Canvas canvas;
+	private GraphicsContext mGC;
+	private Canvas mCanvas;
 
 	/**
-	 * 
+	 * Constructor.
+	 * @param stage Stage object.
 	 */
 	public GameController(Stage stage) {
 		this.mStage = stage;
@@ -98,139 +108,140 @@ public final class GameController  {
 		String url = file.getPath();
 		System.out.println(url);
 		initialize();
-
-		ballSprite = new ImageView("file:///Pong/src/edu/ilstu/ballSprite.png");
-
-		ballSprite.setLayoutX(100);
-		ballSprite.setLayoutY(100);
-
-		// gamePane.getChildren().add(ballSprite);
-		ballSprite.toFront();
+		mBallSprite = new ImageView("file:///Pong/src/edu/ilstu/ballSprite.png");
+		mBallSprite.setLayoutX(100);
+		mBallSprite.setLayoutY(100);
+		mBallSprite.toFront();
 
 //		ballSprite.layoutXProperty().bindBidirectional(gameBall.layoutXProperty());
 //		ballSprite.layoutYProperty().bindBidirectional(gameBall.layoutYProperty());
 		updaterInit();
 	}
 
+	/**
+	 * Initializes FXMl loading.
+	 */
 	@FXML
 	public void initialize() {
+		mGamePane = new Pane();
+		mGamePane.setMinSize(1500, 1000);
+		mCanvas = new Canvas(1500, 1000);
+		mGC = mCanvas.getGraphicsContext2D();
 
-		gamePane = new Pane();
-		gamePane.setMinSize(1500, 1000);
-		canvas = new Canvas(1500, 1000);
-		gc = canvas.getGraphicsContext2D();
-
-		gamePane.getChildren().add(canvas);
-		mScene = new Scene(gamePane);
+		mGamePane.getChildren().add(mCanvas);
+		mScene = new Scene(mGamePane);
 		mStage.setScene(mScene);
 		mStage.show();
 
-		player1 = new Player(KeyCode.W, KeyCode.S);
-		player2 = new Player(KeyCode.P, KeyCode.L);
+		mPlayerOne = new Player(KeyCode.W, KeyCode.S, Side.Left);
+		mPlayerTwo = new Player(KeyCode.P, KeyCode.L, Side.Right);
 		
-		gameBall = new Ball(gamePane);
-		gameBall.setVisible(false);
-		gameBall.setDisable(true);
-		gameBall.applyCss();
+		mGameBall = new Ball(mGamePane);
+		mGameBall.setVisible(false);
+		mGameBall.setDisable(true);
+		mGameBall.applyCss();
 
-		player1Paddle = player1.getPlayerPaddle().getPaddle();
-		player2Paddle = player2.getPlayerPaddle().getPaddle();
+		mPlayerOnePaddle = mPlayerOne.getPlayerPaddle().getPaddle();
+		mPlayerTwoPaddle = mPlayerTwo.getPlayerPaddle().getPaddle();
 
-		gamePane.getChildren().add(player1.getPlayerPaddle().getPaddle());
-		gamePane.getChildren().add(player2.getPlayerPaddle().getPaddle());
-		gamePane.getChildren().add(gameBall);
+		mGamePane.getChildren().add(mPlayerOne.getPlayerPaddle().getPaddle());
+		mGamePane.getChildren().add(mPlayerTwo.getPlayerPaddle().getPaddle());
+		mGamePane.getChildren().add(mGameBall);
 		//Ensures that canvas is visible
-		canvas.toFront();
+		mCanvas.toFront();
 
-		player1Paddle.setLayoutX((gamePane.getLayoutBounds().getMinX() + 100));
-		player1Paddle.setLayoutY(gamePane.getLayoutBounds().getMaxY() / 2 - 50);
-		player2Paddle.setLayoutX(gamePane.getLayoutBounds().getMaxX() - 100);
-		player2Paddle.setLayoutY(gamePane.getLayoutBounds().getMaxY() / 2 - 50);
-		player1.getPlayerPaddle().setCord(new Point2D(player1Paddle.getLayoutX(), player1Paddle.getLayoutY()));
-		player2.getPlayerPaddle().setCord(new Point2D(player2Paddle.getLayoutX(), player2Paddle.getLayoutY()));
+		mPlayerOnePaddle.setLayoutX((mGamePane.getLayoutBounds().getMinX() + 100));
+		mPlayerOnePaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2 - 50);
+		mPlayerTwoPaddle.setLayoutX(mGamePane.getLayoutBounds().getMaxX() - 100);
+		mPlayerTwoPaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2 - 50);
+		mPlayerOne.getPlayerPaddle().setCord(new Point2D(mPlayerOnePaddle.getLayoutX(), mPlayerOnePaddle.getLayoutY()));
+		mPlayerTwo.getPlayerPaddle().setCord(new Point2D(mPlayerTwoPaddle.getLayoutX(), mPlayerTwoPaddle.getLayoutY()));
 		//Adds boundry lines for the screen edges to check for collisions.
-		screenLine1 = new Line();
-		screenLine1.setStartX(0);
-		screenLine1.setEndX(gamePane.getLayoutBounds().getMaxX());
-		screenLine1.setLayoutX(0);
-		screenLine1.setLayoutY(gamePane.getLayoutBounds().getMaxY());
-		screenLine2 = new Line();
-		screenLine2.setStartX(0);
-		screenLine2.setEndX(gamePane.getLayoutBounds().getMaxX());
-		screenLine2.setLayoutX(0);
-		screenLine2.setLayoutY(gamePane.getLayoutBounds().getMinY());
+		mScreenLineOne = new Line();
+		mScreenLineOne.setStartX(0);
+		mScreenLineOne.setEndX(mGamePane.getLayoutBounds().getMaxX());
+		mScreenLineOne.setLayoutX(0);
+		mScreenLineOne.setLayoutY(mGamePane.getLayoutBounds().getMaxY());
+		mScreenLineTwo = new Line();
+		mScreenLineTwo.setStartX(0);
+		mScreenLineTwo.setEndX(mGamePane.getLayoutBounds().getMaxX());
+		mScreenLineTwo.setLayoutX(0);
+		mScreenLineTwo.setLayoutY(mGamePane.getLayoutBounds().getMinY());
 		
-		gamePane.getChildren().add(screenLine2);
+		mGamePane.getChildren().add(mScreenLineTwo);
 		
-		player1GoalLine = new Line();
-		player1GoalLine.setLayoutX(0);
-		player1GoalLine.setLayoutY(0);
-		player1GoalLine.setStartY(gamePane.getLayoutBounds().getMinY());
-		player1GoalLine.setEndY(gamePane.getLayoutBounds().getMaxY());
-		player2GoalLine = new Line();
-		player2GoalLine.setLayoutX(gamePane.getLayoutBounds().getMaxX());
-		player2GoalLine.setLayoutY(0);
-		player2GoalLine.setStartY(gamePane.getLayoutBounds().getMinY());
-		player2GoalLine.setEndY(gamePane.getLayoutBounds().getMaxY());
+		mPlayerOneGoalLine = new Line();
+		mPlayerOneGoalLine.setLayoutX(0);
+		mPlayerOneGoalLine.setLayoutY(0);
+		mPlayerOneGoalLine.setStartY(mGamePane.getLayoutBounds().getMinY());
+		mPlayerOneGoalLine.setEndY(mGamePane.getLayoutBounds().getMaxY());
+		mPlayerTwoGoalLine = new Line();
+		mPlayerTwoGoalLine.setLayoutX(mGamePane.getLayoutBounds().getMaxX());
+		mPlayerTwoGoalLine.setLayoutY(0);
+		mPlayerTwoGoalLine.setStartY(mGamePane.getLayoutBounds().getMinY());
+		mPlayerTwoGoalLine.setEndY(mGamePane.getLayoutBounds().getMaxY());
+		
+		mScreenLineOneBounds = mScreenLineOne.getBoundsInParent();
+		mScreenLineTwoBounds = mScreenLineTwo.getBoundsInParent();
+		mPlayerOneGoalLineBounds = mPlayerOneGoalLine.getBoundsInParent();
+		mPlayerTwoGoalLineBounds = mPlayerTwoGoalLine.getBoundsInParent();
 
-		score2.relocate(gamePane.getLayoutBounds().getMaxX() / 2 - 50, gamePane.getLayoutBounds().getMaxY() - 100);
-		score2.setFont(Font.font(50));
+		mScoreLabelTwo.relocate(mGamePane.getLayoutBounds().getMaxX() / 2 - 50, mGamePane.getLayoutBounds().getMaxY() - 100);
+		mScoreLabelTwo.setFont(Font.font(50));
 
-		score1.relocate(gamePane.getLayoutBounds().getMaxX() / 2 + 50, gamePane.getLayoutBounds().getMaxY() - 100);
-		score1.setFont(Font.font(50));
+		mScoreLabelOne.relocate(mGamePane.getLayoutBounds().getMaxX() / 2 + 50, mGamePane.getLayoutBounds().getMaxY() - 100);
+		mScoreLabelOne.setFont(Font.font(50));
 
-		gamePane.getChildren().add(player1GoalLine);
-		gamePane.getChildren().add(player2GoalLine);
-		gamePane.getChildren().add(score1);
-		gamePane.getChildren().add(score2);
-
-		;
-
+		mGamePane.getChildren().add(mPlayerOneGoalLine);
+		mGamePane.getChildren().add(mPlayerTwoGoalLine);
+		mGamePane.getChildren().add(mScoreLabelOne);
+		mGamePane.getChildren().add(mScoreLabelTwo);
+		KeyControl<KeyCode> playerOnePaddleUpControl = (KeyControl<KeyCode>)mPlayerOne.getPaddleUpControl();
+		KeyControl<KeyCode> playerOnePaddleDownControl = (KeyControl<KeyCode>)mPlayerOne.getPaddleDownControl();
+		KeyControl<KeyCode> playerTwoPaddleUpControl = (KeyControl<KeyCode>)mPlayerTwo.getPaddleUpControl();
+		KeyControl<KeyCode> playerTwoPaddleDownControl = (KeyControl<KeyCode>)mPlayerTwo.getPaddleDownControl();
 		mScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
-				KeyControl<KeyCode> playerOnePaddleUpControl = (KeyControl<KeyCode>)player1.getPaddleUpControl();
-				KeyControl<KeyCode> playerOnePaddleDownControl = (KeyControl<KeyCode>)player1.getPaddleDownControl();
-				KeyControl<KeyCode> playerTwoPaddleUpControl = (KeyControl<KeyCode>)player2.getPaddleUpControl();
-				KeyControl<KeyCode> playerTwoPaddleDownControl = (KeyControl<KeyCode>)player2.getPaddleDownControl();
 				System.out.println(event.getCharacter());
 				if (event.getCode().equals(playerOnePaddleUpControl.getControl())) {
-					if (player1Up != true) {
+					if (mPlayerOneUp != true) {
 						playerOnePaddleUpControl.sendControlActivatedEvent(playerOnePaddleUpControl.getControl(), System.currentTimeMillis());
-						player1Up = true;
+						mPlayerOneUp = true;
 					}
 
 				} else if (event.getCode().equals(playerOnePaddleDownControl.getControl())) {
-					if (player1Down != true) {
+					if (mPlayerOneDown != true) {
 						playerOnePaddleDownControl.sendControlActivatedEvent(playerOnePaddleDownControl.getControl(), System.currentTimeMillis());
-						player1Down = true;
+						mPlayerOneDown = true;
 					}
 
 				}
 				if (event.getCode().equals(playerTwoPaddleUpControl.getControl())) {
-					if (player2Up != true) {
+					if (mPlayerTwoUp != true) {
 						playerTwoPaddleUpControl.sendControlActivatedEvent(playerTwoPaddleUpControl.getControl(), System.currentTimeMillis());
-						player2Up = true;
+						mPlayerTwoUp = true;
 					}
 
 				} else if (event.getCode().equals(playerTwoPaddleDownControl.getControl())) {
-					if (player2Down != true) {
+					if (mPlayerTwoDown != true) {
 						playerTwoPaddleDownControl.sendControlActivatedEvent(playerTwoPaddleDownControl.getControl(), System.currentTimeMillis());
-						player2Down = true;
+						mPlayerTwoDown = true;
 					}
 				}
 			}
 		});
+		
 		mScene.setOnKeyReleased(new EventHandler<KeyEvent>() {
 			public void handle(KeyEvent event) {
-				if (event.getCode() == KeyCode.W) {
-					player1Up = false;
-				} else if (event.getCode() == KeyCode.S) {
-					player1Down = false;
+				if (event.getCode().equals(playerOnePaddleUpControl.getControl())) {
+					mPlayerOneUp = false;
+				} else if (event.getCode().equals(playerOnePaddleDownControl.getControl())) {
+					mPlayerOneDown = false;
 				}
-				if (event.getCode() == KeyCode.P) {
-					player2Up = false;
-				} else if (event.getCode() == KeyCode.L) {
-					player2Down = false;
+				if (event.getCode().equals(playerTwoPaddleUpControl.getControl())) {
+					mPlayerTwoUp = false;
+				} else if (event.getCode().equals(playerTwoPaddleDownControl.getControl())) {
+					mPlayerTwoDown = false;
 				}
 			}
 		});
@@ -240,56 +251,55 @@ public final class GameController  {
 	 * Initializes the updater.
 	 */
 	public void updaterInit() {
+		this.resetGameBall(null);
 		final Timeline timeline = new Timeline(
 				new KeyFrame(Duration.seconds(FRAME_PER_SECOND), new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent e) {
-						if (gameBall.isCanMove() == true) {
-							gameBall.constantMove(gameBall.getCenterX(), gameBall.getCenterY(), gc);
-							gc.clearRect(0, 0, 2000, 2000);
-							gameBall.setCenterX(gameBall.getXLocation());
-							gameBall.setCenterY(gameBall.getYLocation());
-							gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-									gameBall.getRadius() * 2);
+						render();
+						if (mGameBall.isCanMove() == true) {
+							mGameBall.constantMove(mGameBall.getCenterX(), mGameBall.getCenterY(), mGC);
+							mGC.clearRect(0, 0, 2000, 2000);
+							mGameBall.setCenterX(mGameBall.getXLocation());
+							mGameBall.setCenterY(mGameBall.getYLocation());
+							mGC.fillOval(mGameBall.getCenterX(), mGameBall.getCenterY(), mGameBall.getRadius() * 2,
+									mGameBall.getRadius() * 2);
 						}
 						checkCollisions();
-						if (gameBall.getCenterX() < gamePane.getLayoutBounds().getMinX()
-								|| gameBall.getCenterX() > gamePane.getLayoutBounds().getMinX()) {
+						if (mGameBall.getCenterX() < mGamePane.getLayoutBounds().getMinX()
+								|| mGameBall.getCenterX() > mGamePane.getLayoutBounds().getMinX()) {
 							// gc.clearRect(0, 0, 2000, 2000);
 							// gameBall.reset(gamePane);
 
-						} else if (gameBall.getCenterY() < gamePane.getLayoutBounds().getMinY()
-								|| gameBall.getCenterY() > gamePane.getLayoutBounds().getMinY()) {
+						} else if (mGameBall.getCenterY() < mGamePane.getLayoutBounds().getMinY()
+								|| mGameBall.getCenterY() > mGamePane.getLayoutBounds().getMinY()) {
 							// gc.clearRect(0, 0, 2000, 2000);
 							// gameBall.reset(gamePane);
 						}
 
-						if (player1Up == true && player1.getPlayerPaddle().canMoveUp() == true) {
-							player1.getPlayerPaddle().moveUp();
+						if (mPlayerOneUp && mPlayerOne.getPlayerPaddle().canMoveUp()) {
+							mPlayerOne.getPlayerPaddle().moveUp();
 						} else {
-							player1Up = false;
+							mPlayerOneUp = false;
 						}
-						if (player1Down == true && player1.getPlayerPaddle().canMoveDown() == true) {
-							player1.getPlayerPaddle().moveDown();
+						if (mPlayerOneDown  && mPlayerOne.getPlayerPaddle().canMoveDown()) {
+							mPlayerOne.getPlayerPaddle().moveDown();
 						} else {
-							player1Down = false;
+							mPlayerOneDown = false;
 						}
-						if (player2Up == true && player2.getPlayerPaddle().canMoveUp() == true) {
-							player2.getPlayerPaddle().moveUp();
+						if (mPlayerTwoUp && mPlayerTwo.getPlayerPaddle().canMoveUp()) {
+							mPlayerTwo.getPlayerPaddle().moveUp();
 						} else {
-							player2Up = false;
+							mPlayerTwoUp = false;
 
 						}
-						if (player2Down == true && player2.getPlayerPaddle().canMoveDown() == true) {
-							player2.getPlayerPaddle().moveDown();
+						if (mPlayerTwoDown && mPlayerTwo.getPlayerPaddle().canMoveDown()) {
+							mPlayerTwo.getPlayerPaddle().moveDown();
 						} else {
-							player2Down = false;
+							mPlayerTwoDown = false;
 						}
 
-						player1Paddle.setLayoutX(player1.getPlayerPaddle().getXCord());
-						player1Paddle.setLayoutY(player1.getPlayerPaddle().getYCord());
-						player2Paddle.setLayoutX(player2.getPlayerPaddle().getXCord());
-						player2Paddle.setLayoutY(player2.getPlayerPaddle().getYCord());
+						
 						FpsDisplay += 1;
 					}
 				}));
@@ -307,7 +317,7 @@ public final class GameController  {
 			@Override
 			public void handle(ActionEvent event) {
 				//System.out.println(FpsDisplay);
-				//score1.setText(Integer.toString(FpsDisplay));
+				//mScoreLabelOne.setText(Integer.toString(FpsDisplay));
 				FpsDisplay = 0;
 
 			}
@@ -320,79 +330,96 @@ public final class GameController  {
 	 * Checks for collisions.
 	 */
 	public final void checkCollisions() {
+		this.checkPlayerCollisions(mPlayerOne, mGameBall);
+		this.checkPlayerCollisions(mPlayerTwo, mGameBall);
+		this.checkWallBallCollisions(mGameBall);
+	}
+	
+	public void checkPlayerCollisions(Player player,  Ball gameBall) {
 		double a1 = 0.0;
 		double a2 = 0.0;
 		double a3 = 0.0;
 		double y = 0.0;
 		double z = 0.0;
-		if (player1Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-			a1 = (player1Paddle.getHeight() * 1 / 3);
-			a2 = (player1Paddle.getHeight() * 2 / 3);
-			a3 = (player1Paddle.getHeight() * 3 / 3);
-			y = player1Paddle.getLayoutY();
+		Paddle paddle = player.getPlayerPaddle();
+		Rectangle paddleRec = paddle.getPaddle();
+		Bounds paddleRecBounds = paddleRec.getBoundsInParent();
+		if (paddleRecBounds.intersects(mScreenLineOneBounds)) {
+			paddle.setCanMoveUp(true);
+			paddle.setCanMoveDown(false);
+		} else if (paddleRecBounds.intersects(mScreenLineTwoBounds)) {
+			paddle.setCanMoveUp(false);
+			paddle.setCanMoveDown(true);
+		} else {
+			paddle.setCanMoveUp(true);
+			paddle.setCanMoveDown(true);
+		}
+		
+		if (paddleRecBounds.intersects(gameBall.getBoundsInParent())) {
+			System.out.println(player.getPlayerSide().toString() + " player's paddle hit the ball");
+			a1 = (paddleRec.getHeight() * 1 / 3);
+			a2 = (paddleRec.getHeight() * 2 / 3);
+			a3 = (paddleRec.getHeight() * 3 / 3);
+			y = paddleRec.getLayoutY();
 			z = gameBall.getCenterY();
 			a1 = y + a1;
 			a2 = y + a2;
 			a3 = y + a3;
+			double invertedXVec = gameBall.getxVec() * -1;
+		
 			if (z >= y && z <= a1 && z <= a3) {
-				gameBall.hitPaddle(0.5, -0.5);
+				gameBall.hitPaddle(invertedXVec, -0.5, paddle);
+				gameBall.registerCollision(paddle);
 				//System.out.println("HUp");
 			} else if (z > a1 && z <= a2 && z <= a3) {
-				gameBall.hitPaddle(1.0, 0.1);
+				gameBall.hitPaddle(invertedXVec, 0.1, paddle);
+				gameBall.registerCollision(paddle);
 				//System.out.println("HCenter");
 			} else if (z > a2 && z <= a3) {
-				gameBall.hitPaddle(0.5, 0.5);
+				gameBall.hitPaddle(invertedXVec, 0.5, paddle);
+				gameBall.registerCollision(paddle);
 				//System.out.println("Hdown");
-
+				
 			} else {
 				System.out.println("did not hit front paddle");
-
 			}
-			gameBall.setCenterX(gameBall.getXLocation());
-			gameBall.setCenterY(gameBall.getYLocation());
-		} else if (player2Paddle.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-			a1 = (player2Paddle.getHeight() * 1 / 3);
-			a2 = (player2Paddle.getHeight() * 2 / 3);
-			a3 = (player2Paddle.getHeight() * 3 / 3);
-			y = player2Paddle.getLayoutY();
-			z = gameBall.getCenterY();
-			a1 = y + a1;
-			a2 = y + a2;
-			a3 = y + a3;
-
-			if (z >= y && z <= a1 && z <= a3) {
-				gameBall.hitPaddle(-0.5, -0.5);
-				System.out.println("HUp");
-			} else if (z > a1 && z <= a2 && z <= a3) {
-				gameBall.hitPaddle(-0.5, 0.1);
-				System.out.println("HCenter");
-			} else if (z > a2 && z <= a3) {
-				gameBall.hitPaddle(-0.5, 0.5);
-				System.out.println("Hdown");
-
+			
+		} 
+	}
+	
+	/**
+	 * Checks for wall collissions.
+	 * @param gameBall
+	 */
+	public void checkWallBallCollisions(Ball gameBall) {
+		if (gameBall != null) {
+			Bounds gameBallBounds = gameBall.getBoundsInParent();
+			if (mPlayerOneGoalLineBounds.intersects(gameBallBounds)) {
+				mPlayerOne.playerScoredGoal();
+				this.clearScreen();
+				this.resetGameBall(mPlayerOne);
+				int score = Integer.parseInt(mScoreLabelOne.getText());
+				score += 1;
+				mScoreLabelOne.setText(Integer.toString(score));
+			} else if (mPlayerTwoGoalLineBounds.intersects(gameBallBounds)) {
+				mPlayerTwo.playerScoredGoal();
+				this.clearScreen();
+				this.resetGameBall(mPlayerTwo);
+				System.out.println("Scored");
+				int score = Integer.parseInt(mScoreLabelTwo.getText());
+				score += 1;
+				mScoreLabelTwo.setText(Integer.toString(score));
+			} else if (mScreenLineOneBounds.intersects(gameBallBounds)) {
+				gameBall.bounce(mScreenLineOneBounds);
+				gameBall.registerCollision(mScreenLineOneBounds);
+			}  else if (mScreenLineTwoBounds.intersects(gameBallBounds)) {
+				gameBall.bounce(mScreenLineOneBounds);
+				gameBall.registerCollision(mScreenLineTwoBounds);
 			} else {
-				System.out.println("did not hit front paddle");
-
+				
 			}
-			gameBall.setCenterX(gameBall.getXLocation());
-			gameBall.setCenterY(gameBall.getYLocation());
-		}
-		//System.out.println("Paddle 2" + z + " " + y + "  " + a1 + "  " + a2 + "  " + a3);
-		if (player1GoalLine.getBoundsInParent().intersects(gameBall.getBoundsInParent())) {
-			player1.playerScoredGoal();
-			this.clearScreen();
-			this.resetGameBall();
-			int score = Integer.parseInt(score1.getText());
-			score += 1;
-			score1.setText(Integer.toString(score));
-		} else if (gameBall.getBoundsInParent().intersects(player2GoalLine.getBoundsInParent())) {
-			player2.playerScoredGoal();
-			this.clearScreen();
-			this.resetGameBall();
-			System.out.println("Scored");
-			int score = Integer.parseInt(score2.getText());
-			score += 1;
-			score2.setText(Integer.toString(score));
+		} else {
+			System.err.println("Game ball is null");
 		}
 	}
 	
@@ -400,18 +427,53 @@ public final class GameController  {
 	 * Writes a blank screen.
 	 */
 	public void clearScreen() {
-		gc.clearRect(0, 0, 2000, 2000);
+		mGC.clearRect(0, 0, 2000, 2000);
+	}
+	
+	public void render() {
+		mPlayerOnePaddle.setLayoutX(mPlayerOne.getPlayerPaddle().getXCord());
+		mPlayerOnePaddle.setLayoutY(mPlayerOne.getPlayerPaddle().getYCord());
+		mPlayerTwoPaddle.setLayoutX(mPlayerTwo.getPlayerPaddle().getXCord());
+		mPlayerTwoPaddle.setLayoutY(mPlayerTwo.getPlayerPaddle().getYCord());
+		mGameBall.setCenterX(mGameBall.getXLocation());
+		mGameBall.setCenterY(mGameBall.getYLocation());
 	}
 	
 	/**
 	 * Resets the game ball to the middle of the screen.
 	 */
-	public void resetGameBall() {
-		gameBall.reset();
-		gameBall.setCenterX(gameBall.getXLocation());
-		gameBall.setCenterY(gameBall.getYLocation());
-		gc.fillOval(gameBall.getCenterX(), gameBall.getCenterY(), gameBall.getRadius() * 2,
-				gameBall.getRadius() * 2);
+	public void resetGameBall(Player scoringPlayer) {
+		mGameBall.reset();
+		mGameBall.setCenterX(mGameBall.getXLocation());
+		mGameBall.setCenterY(mGameBall.getYLocation());
+		if (scoringPlayer != null) {
+			switch (scoringPlayer.getPlayerSide()) {
+			case Left:
+				mGameBall.changeBallVector(1, 0);
+				break;
+			case Right:
+				mGameBall.changeBallVector(-1, 0);
+				break;
+			case Unnassigned:
+				mGameBall.changeBallVector(0, 0);
+				break;
+				default:
+					break;
+			}
+		} else {
+			//called when a player hasnt score.
+			double xVec = 0;
+			int pic = new Random().nextInt(2);
+			if (pic == 1) {
+				xVec = -1;
+			} else {
+				xVec = 1;
+			}
+			mGameBall.changeBallVector(xVec, 0);
+		}
+		
+		mGC.fillOval(mGameBall.getCenterX(), mGameBall.getCenterY(), mGameBall.getRadius() * 2,
+				mGameBall.getRadius() * 2);
 	}
 	
 	
