@@ -2,7 +2,15 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.botka</groupId>
   <artifactId>pong</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.9.1-SNAPSHOT</version>
+  <dependencies>
+	  <dependency>
+	    <groupId>org.openjfx</groupId>
+	    <artifactId>javafx</artifactId>
+	    <version>11</version>
+	    <type>pom</type>
+	</dependency>
+  </dependencies>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
