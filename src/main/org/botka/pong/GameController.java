@@ -383,7 +383,6 @@ public final class GameController  {
 			} else {
 				System.out.println("did not hit front paddle");
 			}
-			
 		} 
 	}
 	
