@@ -30,6 +30,17 @@
 	    <version>11.0.2</version>
 	</dependency>
 	<dependency>
+	    <groupId>org.openjfx</groupId>
+	    <artifactId>javafx-swing</artifactId>
+	    <version>11.0.2</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.openjfx</groupId>
+	    <artifactId>javafx-web</artifactId>
+	    <version>11.0.2</version>
+	</dependency>
+	
+	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
   		<version>4.13</version>

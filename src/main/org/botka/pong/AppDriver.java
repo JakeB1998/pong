@@ -19,27 +19,14 @@ import javafx.stage.Stage;
  * @author Jake Botka
  *
  */
-public class AppDriver extends Application {
+public class AppDriver  {
 	
 	/**
 	 * @param args Command Line arguments.
 	 */
 	public static void main(String[] args) {
-		launch();
-	}
-
-	/**
-	 * Called by launch().
-	 * @param arg0 Stage object.
-	 * @throws Exception
-	 *
-	 */
-	@Override
-	public void start(Stage arg0) throws Exception {
-		GameController game = new GameController(arg0);
-//		appScene.getStylesheets().add
-//		 (Login.class.getResource("Login.css").toExternalForm());
-
+		Application.launch(Launcher.class);
+	
 	}
 
 }
