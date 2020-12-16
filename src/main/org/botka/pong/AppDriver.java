@@ -21,7 +21,6 @@ import javafx.stage.Stage;
  */
 public class AppDriver extends Application {
 	
-
 	/**
 	 * @param args Command Line arguments.
 	 */

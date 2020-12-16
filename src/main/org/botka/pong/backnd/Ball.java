@@ -85,17 +85,6 @@ public class Ball extends Circle {
 		if (mCanMove) {
 			mXLocation = centerX + (mXVec * mVelocity);
 			mYLocation = centerY + (mYVec * mVelocity);
-			/*
-			if (((GameController.screenLine2.getBoundsInParent().intersects(this.getBoundsInParent())))) {
-				bounce();
-				// yLocation += offset;
-			}
-			if ((GameController.screenLine1.getBoundsInParent().intersects(this.getBoundsInParent()))) {
-				bounce();
-				// yLocation -= offset;
-
-			}
-			*/
 			if (mYVec > 0.60) {
 				mYVec = mYVec / 2;
 				mXVec = mXVec * 2;
@@ -129,11 +118,9 @@ public class Ball extends Circle {
 		mOffset += 10;
 	}
 
-	
 
 	public void stopConstantMove() {
 		mCanMove = false;
-
 	}
 	
 	public void registerCollision(Object collisionSource) {
@@ -141,15 +128,11 @@ public class Ball extends Circle {
 	}
 
 	public void reset() {
-		// xLocation = gamePane.getLayoutBounds().getMaxX() / 2;
-		// yLocation = gamePane.getLayoutBounds().getMaxY() / 2;
-
 		mXLocation = this.getParent().getLayoutBounds().getMaxX() / 2;
 		mYLocation = this.getParent().getLayoutBounds().getMaxY() / 2;
 		mVelocity = 5;
 		mOffset = 10;
 		mBounceCount = 0;
-
 		AnimationSystem.countdownnAimatioon(3, (Pane) this.getParent());
 		lockBall(3);
 
@@ -164,7 +147,6 @@ public class Ball extends Circle {
 					Thread.sleep(seconds * 1000);
 					mCanMove = true;
 				} catch (InterruptedException e) {
-
 					e.printStackTrace();
 				}
 			}
