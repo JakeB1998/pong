@@ -63,13 +63,18 @@ public final class GameController  {
 
 	public static LocalTime currentTime = LocalTime.now();
 
+	
+	@FXML public AnchorPane mGamePane;
+	@FXML public Label mScoreLabelOne = new Label("0");
+	@FXML public Label mScoreLabelTwo = new Label("0");
+	
 	private Stage mStage;
 	private Scene mScene;
 	private boolean mPlayerOneUp = false;
 	private boolean mPlayerOneDown = false;
 	private boolean mPlayerTwoUp = false;
 	private boolean mPlayerTwoDown = false;
-	private Pane mGamePane;
+	
 
 	private Player mPlayerOne;
 	private Player mPlayerTwo;
@@ -77,9 +82,6 @@ public final class GameController  {
 
 	private Rectangle mPlayerOnePaddle;
 	private Rectangle mPlayerTwoPaddle;
-
-	private ImageView mBallSprite;
-	
 
 	private Line mPlayerOneGoalLine;
 	private Line mPlayerTwoGoalLine;
@@ -91,8 +93,7 @@ public final class GameController  {
 	public Bounds mScreenLineOneBounds;
 	public Bounds mScreenLineTwoBounds;
 
-	public Label mScoreLabelOne = new Label("0");
-	public Label mScoreLabelTwo = new Label("0");
+	
 
 	
 	private GraphicsContext mGC;
@@ -108,13 +109,7 @@ public final class GameController  {
 		String url = file.getPath();
 		System.out.println(url);
 		initialize();
-		mBallSprite = new ImageView("file:///Pong/src/edu/ilstu/ballSprite.png");
-		mBallSprite.setLayoutX(100);
-		mBallSprite.setLayoutY(100);
-		mBallSprite.toFront();
 
-//		ballSprite.layoutXProperty().bindBidirectional(gameBall.layoutXProperty());
-//		ballSprite.layoutYProperty().bindBidirectional(gameBall.layoutYProperty());
 		updaterInit();
 	}
 
@@ -123,7 +118,7 @@ public final class GameController  {
 	 */
 	@FXML
 	public void initialize() {
-		mGamePane = new Pane();
+		mGamePane = new AnchorPane();
 		mGamePane.setMinSize(1500, 1000);
 		mCanvas = new Canvas(1500, 1000);
 		mGC = mCanvas.getGraphicsContext2D();
@@ -139,7 +134,6 @@ public final class GameController  {
 		mGameBall = new Ball(mGamePane);
 		mGameBall.setVisible(false);
 		mGameBall.setDisable(true);
-		mGameBall.applyCss();
 
 		mPlayerOnePaddle = mPlayerOne.getPlayerPaddle().getPaddle();
 		mPlayerTwoPaddle = mPlayerTwo.getPlayerPaddle().getPaddle();
@@ -180,7 +174,6 @@ public final class GameController  {
 		mPlayerTwoGoalLine.setLayoutY(0);
 		mPlayerTwoGoalLine.setStartY(mGamePane.getLayoutBounds().getMinY());
 		mPlayerTwoGoalLine.setEndY(mGamePane.getLayoutBounds().getMaxY());
-		
 		mScreenLineOneBounds = mScreenLineOne.getBoundsInParent();
 		mScreenLineTwoBounds = mScreenLineTwo.getBoundsInParent();
 		mPlayerOneGoalLineBounds = mPlayerOneGoalLine.getBoundsInParent();
@@ -475,6 +468,18 @@ public final class GameController  {
 				mGameBall.getRadius() * 2);
 	}
 	
-	
+	/**
+	 * 
+	 * @author Jake Botka
+	 *
+	 */
+	public class RestartBtnAction extends ActionEvent {
+		private static final long serialVersionUID = 5810132805011832855L;
+		
+		public void handle(ActionEvent event) {
+			
+		}
+		
+	}
 
 }
