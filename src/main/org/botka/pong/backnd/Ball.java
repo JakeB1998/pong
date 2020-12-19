@@ -45,7 +45,10 @@ public class Ball extends Circle {
 	private Point2D cord;
 	private String mLastCollisionID;
 	
-	
+	/**
+	 * Private constructor.
+	 * Only used for initalizing variables.
+	 */
 	private Ball() {
 		this.mXVec = 0.5;
 		this.mYVec = 0;
@@ -58,6 +61,10 @@ public class Ball extends Circle {
 	
 	}
 
+	/**
+	 * Constructor.
+	 * @param gamePane Parent pane.
+	 */
 	public Ball(Pane gamePane) {
 		this();
 		this.setRadius(12);
@@ -67,20 +74,36 @@ public class Ball extends Circle {
 
 	}
 	
+	/**
+	 * Logic behind the ball bouncing on an object.
+	 * This is also used to ensure thata  ball does not rebounce on the same object a frame later.
+	 * @param collidingObject The source of the object the ball is colliding with.
+	 */
 	public void bounce(Object collidingObject) {
 		//MediaSystem.playPongBlip();
 		mBounceCount++;
 		if (mCanBounce == true && String.valueOf(collidingObject.hashCode()).equals(this.mLastCollisionID) == false ) {
 			mYVec = mYVec * -1;
 		}
-		
 	}
 
+	/**
+	 * Changes the direcitonal vector of the ball.
+	 * @param xVec X directional vector.
+	 * @param yVec Y directional vector.
+	 */
 	public void changeBallVector(double xVec, double yVec) {
 		this.mXVec = xVec;
 		this.mYVec = yVec;
 	}
 
+	/**
+	 * Called per frame by controller.
+	 * Handles a single movement of the ball logically.
+	 * @param centerX Center x of the ball.
+	 * @param centerY Center y of the ball.
+	 * @param gc Canvas graphics context for rendering.
+	 */
 	public void constantMove(double centerX, double centerY, GraphicsContext gc) {
 		if (mCanMove) {
 			mXLocation = centerX + (mXVec * mVelocity);
@@ -93,6 +116,12 @@ public class Ball extends Circle {
 		}
 	}
 
+	/**
+	 * Handles logical of the ball hitting the paddle.
+	 * @param x X coordinate of the collision.
+	 * @param y Y coordinate of the collision.
+	 * @param paddle Paddle.
+	 */
 	public void hitPaddle(double x, double y, Paddle paddle) {
 		//MediaSystem.playPongBlip();
 		this.bounce(paddle);
@@ -113,20 +142,33 @@ public class Ball extends Circle {
 		//System.out.println(mXVec + " " + mYVec);
 	}
 
+	/**
+	 * Increases the speed of the ball.
+	 * Handles logic of increasing the ball speed.
+	 */
 	public void increaseSpeed() {
 		mVelocity = mVelocity * 1.25;
 		mOffset += 10;
 	}
 
-
+	/**
+	 * Stops the ball movement by locking the ball in place.
+	 */
 	public void stopConstantMove() {
 		mCanMove = false;
 	}
 	
+	/**
+	 * Registers collision of the ball with another object.
+	 * @param collisionSource Colliding object.
+	 */
 	public void registerCollision(Object collisionSource) {
 		this.mLastCollisionID = String.valueOf(collisionSource.hashCode());
 	}
 
+	/**
+	 * Handles logic of reseting the ball.
+	 */
 	public void reset() {
 		mXLocation = this.getParent().getLayoutBounds().getMaxX() / 2;
 		mYLocation = this.getParent().getLayoutBounds().getMaxY() / 2;
@@ -134,9 +176,12 @@ public class Ball extends Circle {
 		mOffset = 10;
 		mBounceCount = 0;
 		lockBall(3);
-
 	}
 
+	/**
+	 * Locks ball in place.
+	 * @param seconds Duration of the lock in seconds.
+	 */
 	public void lockBall(int seconds) {
 		mCanMove = false;
 		Thread t = new Thread(new Runnable() {
