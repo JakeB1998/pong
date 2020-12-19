@@ -23,7 +23,7 @@ import javafx.util.Duration;
 
 
 /**
- * <insert class description here>
+ * Class that handles animations for the application.
  *
  * @author Jake Botka
  *
@@ -31,6 +31,11 @@ import javafx.util.Duration;
 public class AnimationSystem {
 	
 
+	/**
+	 * Initalizes the animation for the countdown sequence.
+	 * @param second Length of animation in seconds.
+	 * @param context Graphics context for canvas rendering.
+	 */
 	public  void countdownAnimation(int second, final GraphicsContext context) {
 		final int cycleCount = 3;
 		final int x = 500;
@@ -43,8 +48,6 @@ public class AnimationSystem {
 		Timeline oneSec = new Timeline(new KeyFrame(Duration.seconds(1), new EventHandler<ActionEvent>() {
 			
 			int cycle = 0;
-			
-			
 			@SuppressWarnings("deprecation")
 			@Override
 			public void handle(ActionEvent event) {
