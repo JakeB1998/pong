@@ -8,7 +8,10 @@
 
 package main.org.botka.pong;
 
+import static org.hamcrest.CoreMatchers.nullValue;
+
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -17,18 +20,25 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalField;
 import java.util.Random;
 
+
+
 import javafx.animation.Animation;
+import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -62,14 +72,20 @@ public final class GameController  {
 	public static volatile int FpsDisplay = 0;
 
 	public static LocalTime currentTime = LocalTime.now();
+	
+	private final AnimationSystem ANIMATION_SYSTEM = new AnimationSystem();
 
 	
-	@FXML public AnchorPane mGamePane;
-	@FXML public Label mScoreLabelOne = new Label("0");
-	@FXML public Label mScoreLabelTwo = new Label("0");
+	@FXML AnchorPane mGamePane;
+	@FXML MenuItem mRestartMenuItem;
+	@FXML MenuItem mExitMenuItem;
+	@FXML Label mScoreLabelOne;
+	@FXML Label mScoreLabelTwo;
 	
 	private Stage mStage;
 	private Scene mScene;
+	private Timeline mGameLogicUpdater;
+	
 	private boolean mPlayerOneUp = false;
 	private boolean mPlayerOneDown = false;
 	private boolean mPlayerTwoUp = false;
@@ -100,33 +116,71 @@ public final class GameController  {
 	private Canvas mCanvas;
 
 	/**
-	 * Constructor.
-	 * @param stage Stage object.
+	 * JavaFX FXML loader initalizes this class instance.
 	 */
-	public GameController(Stage stage) {
-		this.mStage = stage;
-		File file = new File("/Pong/src/edu/ilstu/ballSprite.png");
-		String url = file.getPath();
-		System.out.println(url);
-		initialize();
-
-		updaterInit();
+	public GameController() {
+		
 	}
+	
 
+
+	/**
+	 * Checks for wall collissions.
+	 * @param gameBall
+	 */
+	public void checkWallBallCollisions(Ball gameBall) {
+		if (gameBall != null) {
+			Bounds gameBallBounds = gameBall.getBoundsInParent();
+			if (mPlayerOneGoalLineBounds.intersects(gameBallBounds)) {
+				mPlayerOne.playerScoredGoal();
+				this.clearScreen();
+				this.resetGameBall(mPlayerOne);
+				System.out.println("Scored");
+				int score = Integer.parseInt(mScoreLabelOne.getText());
+				score += 1;
+				mScoreLabelOne.setText(Integer.toString(score));
+			} else if (mPlayerTwoGoalLineBounds.intersects(gameBallBounds)) {
+				mPlayerTwo.playerScoredGoal();
+				this.clearScreen();
+				this.resetGameBall(mPlayerTwo);
+				System.out.println("Scored");
+				int score = Integer.parseInt(mScoreLabelTwo.getText());
+				score += 1;
+				mScoreLabelTwo.setText(Integer.toString(score));
+			} else if (mScreenLineOneBounds.intersects(gameBallBounds)) {
+				gameBall.bounce(mScreenLineOneBounds);
+				gameBall.registerCollision(mScreenLineOneBounds);
+			}  else if (mScreenLineTwoBounds.intersects(gameBallBounds)) {
+				gameBall.bounce(mScreenLineOneBounds);
+				gameBall.registerCollision(mScreenLineTwoBounds);
+			} else {
+				
+			}
+		} else {
+			System.err.println("Game ball is null");
+		}
+	}
+	
+	/**
+	 * Writes a blank screen.
+	 */
+	public void clearScreen() {
+		mGC.clearRect(0, 0, 2000, 2000);
+	}
+	
+	
 	/**
 	 * Initializes FXMl loading.
 	 */
 	@FXML
 	public void initialize() {
-		mGamePane = new AnchorPane();
-		mGamePane.setMinSize(1500, 1000);
+		mRestartMenuItem.setOnAction(new RestartBtnAction());
+		mExitMenuItem.setOnAction(new ExitBtnAction());
 		mCanvas = new Canvas(1500, 1000);
 		mGC = mCanvas.getGraphicsContext2D();
 
 		mGamePane.getChildren().add(mCanvas);
-		mScene = new Scene(mGamePane);
-		mStage.setScene(mScene);
-		mStage.show();
+		
 
 		mPlayerOne = new Player(KeyCode.W, KeyCode.S, Side.Left);
 		mPlayerTwo = new Player(KeyCode.P, KeyCode.L, Side.Right);
@@ -142,12 +196,19 @@ public final class GameController  {
 		mGamePane.getChildren().add(mPlayerTwo.getPlayerPaddle().getPaddle());
 		mGamePane.getChildren().add(mGameBall);
 		//Ensures that canvas is visible
-		mCanvas.toFront();
+		//mCanvas.toFront();
 
+		
+		
+		System.out.println(mGamePane.getChildren().toString());
+		this.updaterInit();
+	}
+
+	public void initalizeLayout() {
 		mPlayerOnePaddle.setLayoutX((mGamePane.getLayoutBounds().getMinX() + 100));
-		mPlayerOnePaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2 - 50);
+		mPlayerOnePaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2);
 		mPlayerTwoPaddle.setLayoutX(mGamePane.getLayoutBounds().getMaxX() - 100);
-		mPlayerTwoPaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2 - 50);
+		mPlayerTwoPaddle.setLayoutY(mGamePane.getLayoutBounds().getMaxY() / 2);
 		mPlayerOne.getPlayerPaddle().setCord(new Point2D(mPlayerOnePaddle.getLayoutX(), mPlayerOnePaddle.getLayoutY()));
 		mPlayerTwo.getPlayerPaddle().setCord(new Point2D(mPlayerTwoPaddle.getLayoutX(), mPlayerTwoPaddle.getLayoutY()));
 		//Adds boundry lines for the screen edges to check for collisions.
@@ -179,21 +240,29 @@ public final class GameController  {
 		mPlayerOneGoalLineBounds = mPlayerOneGoalLine.getBoundsInParent();
 		mPlayerTwoGoalLineBounds = mPlayerTwoGoalLine.getBoundsInParent();
 
+		/*
 		mScoreLabelTwo.relocate(mGamePane.getLayoutBounds().getMaxX() / 2 - 50, mGamePane.getLayoutBounds().getMaxY() - 100);
 		mScoreLabelTwo.setFont(Font.font(50));
 
 		mScoreLabelOne.relocate(mGamePane.getLayoutBounds().getMaxX() / 2 + 50, mGamePane.getLayoutBounds().getMaxY() - 100);
 		mScoreLabelOne.setFont(Font.font(50));
+		*/
 
 		mGamePane.getChildren().add(mPlayerOneGoalLine);
 		mGamePane.getChildren().add(mPlayerTwoGoalLine);
-		mGamePane.getChildren().add(mScoreLabelOne);
-		mGamePane.getChildren().add(mScoreLabelTwo);
+	}
+	/**
+	 * Called after FXML initalization to pass scene to register listeners that can only be tagged onto the scene.
+	 * @param scene
+	 */
+	public void registerScene(Scene scene) {
 		KeyControl<KeyCode> playerOnePaddleUpControl = (KeyControl<KeyCode>)mPlayerOne.getPaddleUpControl();
 		KeyControl<KeyCode> playerOnePaddleDownControl = (KeyControl<KeyCode>)mPlayerOne.getPaddleDownControl();
 		KeyControl<KeyCode> playerTwoPaddleUpControl = (KeyControl<KeyCode>)mPlayerTwo.getPaddleUpControl();
 		KeyControl<KeyCode> playerTwoPaddleDownControl = (KeyControl<KeyCode>)mPlayerTwo.getPaddleDownControl();
+		mScene = scene;
 		mScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+			
 			public void handle(KeyEvent event) {
 				System.out.println(event.getCharacter());
 				if (event.getCode().equals(playerOnePaddleUpControl.getControl())) {
@@ -239,13 +308,12 @@ public final class GameController  {
 			}
 		});
 	}
-
 	/**
 	 * Initializes the updater.
 	 */
 	public void updaterInit() {
-		this.resetGameBall(null);
-		final Timeline timeline = new Timeline(
+		
+		mGameLogicUpdater = new Timeline(
 				new KeyFrame(Duration.seconds(FRAME_PER_SECOND), new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent e) {
@@ -296,9 +364,7 @@ public final class GameController  {
 						FpsDisplay += 1;
 					}
 				}));
-		timeline.setCycleCount(Animation.INDEFINITE);
-		timeline.play();
-		this.initFPSDisplay();
+		mGameLogicUpdater.setCycleCount(Animation.INDEFINITE);
 	}
 	
 	/**
@@ -379,49 +445,6 @@ public final class GameController  {
 		} 
 	}
 	
-	/**
-	 * Checks for wall collissions.
-	 * @param gameBall
-	 */
-	public void checkWallBallCollisions(Ball gameBall) {
-		if (gameBall != null) {
-			Bounds gameBallBounds = gameBall.getBoundsInParent();
-			if (mPlayerOneGoalLineBounds.intersects(gameBallBounds)) {
-				mPlayerOne.playerScoredGoal();
-				this.clearScreen();
-				this.resetGameBall(mPlayerOne);
-				int score = Integer.parseInt(mScoreLabelOne.getText());
-				score += 1;
-				mScoreLabelOne.setText(Integer.toString(score));
-			} else if (mPlayerTwoGoalLineBounds.intersects(gameBallBounds)) {
-				mPlayerTwo.playerScoredGoal();
-				this.clearScreen();
-				this.resetGameBall(mPlayerTwo);
-				System.out.println("Scored");
-				int score = Integer.parseInt(mScoreLabelTwo.getText());
-				score += 1;
-				mScoreLabelTwo.setText(Integer.toString(score));
-			} else if (mScreenLineOneBounds.intersects(gameBallBounds)) {
-				gameBall.bounce(mScreenLineOneBounds);
-				gameBall.registerCollision(mScreenLineOneBounds);
-			}  else if (mScreenLineTwoBounds.intersects(gameBallBounds)) {
-				gameBall.bounce(mScreenLineOneBounds);
-				gameBall.registerCollision(mScreenLineTwoBounds);
-			} else {
-				
-			}
-		} else {
-			System.err.println("Game ball is null");
-		}
-	}
-	
-	/**
-	 * Writes a blank screen.
-	 */
-	public void clearScreen() {
-		mGC.clearRect(0, 0, 2000, 2000);
-	}
-	
 	public void render() {
 		mPlayerOnePaddle.setLayoutX(mPlayerOne.getPlayerPaddle().getXCord());
 		mPlayerOnePaddle.setLayoutY(mPlayerOne.getPlayerPaddle().getYCord());
@@ -463,9 +486,31 @@ public final class GameController  {
 			}
 			mGameBall.changeBallVector(xVec, 0);
 		}
-		
+		ANIMATION_SYSTEM.countdownAnimation(3, mGC);
 		mGC.fillOval(mGameBall.getCenterX(), mGameBall.getCenterY(), mGameBall.getRadius() * 2,
 				mGameBall.getRadius() * 2);
+	}
+	
+	public void startGame() {
+		if (mGameLogicUpdater != null) {
+			if (!mGameLogicUpdater.getStatus().equals(Status.RUNNING)) {
+				clearScreen();
+				resetGameBall(null);
+				mGameLogicUpdater.play();
+			}
+		}
+	}
+	
+	public void stopGame() {
+		if (mGameLogicUpdater != null) {
+			if (mGameLogicUpdater.getStatus().equals(Status.RUNNING)) {
+				mGameLogicUpdater.stop();
+			}
+		}
+	}
+	
+	public void pauseGame() {
+		
 	}
 	
 	/**
@@ -473,11 +518,25 @@ public final class GameController  {
 	 * @author Jake Botka
 	 *
 	 */
-	public class RestartBtnAction extends ActionEvent {
+	public class RestartBtnAction implements EventHandler<ActionEvent> {
 		private static final long serialVersionUID = 5810132805011832855L;
 		
 		public void handle(ActionEvent event) {
 			
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @author Jake Botka
+	 *
+	 */
+	public class ExitBtnAction implements EventHandler<ActionEvent> {
+		private static final long serialVersionUID = 5810132805011832855L;
+		
+		public void handle(ActionEvent event) {
+			Platform.exit();
 		}
 		
 	}

@@ -133,7 +133,6 @@ public class Ball extends Circle {
 		mVelocity = 5;
 		mOffset = 10;
 		mBounceCount = 0;
-		AnimationSystem.countdownnAimatioon(3, (Pane) this.getParent());
 		lockBall(3);
 
 	}
