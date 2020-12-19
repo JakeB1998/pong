@@ -7,7 +7,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-
 <AnchorPane fx:id="mGamePane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1000.0" prefWidth="1500.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.org.botka.pong.GameController">
    <children>
       <MenuBar>
@@ -25,14 +24,14 @@
           </Menu>
         </menus>
       </MenuBar>
-      <Label fx:id="mScoreLabelOne" alignment="CENTER" layoutX="669.0" layoutY="842.0" prefHeight="32.0" prefWidth="58.0" text="0" textAlignment="CENTER">
+      <Label fx:id="mScoreLabelOne" alignment="CENTER" layoutX="663.0" layoutY="808.0" prefHeight="48.0" prefWidth="49.0" text="0" textAlignment="CENTER">
          <font>
-            <Font size="26.0" />
+            <Font size="23.0" />
          </font>
       </Label>
-      <Label fx:id="mScoreLabelTwo" alignment="CENTER" layoutX="773.0" layoutY="842.0" prefHeight="32.0" prefWidth="58.0" text="0" textAlignment="CENTER">
+      <Label fx:id="mScoreLabelTwo" alignment="CENTER" layoutX="789.0" layoutY="808.0" prefHeight="48.0" prefWidth="49.0" text="0" textAlignment="CENTER">
          <font>
-            <Font size="26.0" />
+            <Font size="23.0" />
          </font>
       </Label>
    </children>
